@@ -65,6 +65,7 @@ function fuseResults(rawResults) {
 
 export default function DocFinder() {
   const [workerUrl, setWorkerUrl] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
   const [query, setQuery] = useState("");
   const [types, setTypes] = useState(["pdf", "ppt", "doc"]);
   const [status, setStatus] = useState("idle");
@@ -89,8 +90,16 @@ export default function DocFinder() {
 
   const runSearch = async () => {
     const q = query.trim();
-    if (!q) return;
-    if (!workerUrl.trim()) { runDemo(); return; }
+    if (!q) {
+      setError("Type what you're looking for in the search box first.");
+      setStatus("error");
+      return;
+    }
+    if (!workerUrl.trim()) {
+      runDemo();
+      setNote("No Worker URL set — showing demo data. Tap Settings below to connect your Worker for live results.");
+      return;
+    }
 
     setStatus("searching");
     setError("");
@@ -138,22 +147,15 @@ export default function DocFinder() {
         <p style={styles.tagline}>search the web's documents, not its pages</p>
       </header>
 
-      <input
-        style={{ ...styles.input, fontSize: 14, marginBottom: 10 }}
-        value={workerUrl}
-        onChange={(e) => setWorkerUrl(e.target.value)}
-        placeholder="Your Worker URL, e.g. https://docfinder.yourname.workers.dev (blank = demo)"
-        aria-label="Cloudflare Worker URL"
-      />
-
       <div style={styles.searchRow}>
         <input
           style={styles.input}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && runSearch()}
-          placeholder="Find reports, papers, decks…"
+          placeholder="Search for reports, papers, decks…"
           aria-label="Search query"
+          autoFocus
         />
         <button
           style={{ ...styles.button, opacity: status === "searching" ? 0.6 : 1 }}
@@ -184,6 +186,26 @@ export default function DocFinder() {
           );
         })}
       </div>
+
+      <button style={styles.settingsToggle} onClick={() => setShowSettings(!showSettings)}>
+        {showSettings ? "Hide settings" : workerUrl ? "Settings · Worker connected" : "Settings · connect your Worker"}
+      </button>
+      {showSettings && (
+        <div style={styles.settingsBox}>
+          <label style={styles.settingsLabel} htmlFor="worker-url">
+            Cloudflare Worker URL — where this site gets live results.
+            Leave blank to use demo data.
+          </label>
+          <input
+            id="worker-url"
+            style={{ ...styles.input, fontSize: 14 }}
+            value={workerUrl}
+            onChange={(e) => setWorkerUrl(e.target.value)}
+            placeholder="https://docfinder.yourname.workers.dev"
+            aria-label="Cloudflare Worker URL"
+          />
+        </div>
+      )}
 
       {status === "error" && (
         <div style={styles.errorBox}>
@@ -305,6 +327,19 @@ const styles = {
     border: "none", borderRadius: 12, background: "#2743F0", color: "#FFF", cursor: "pointer",
   },
   chipRow: { display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" },
+  settingsToggle: {
+    marginTop: 14, fontSize: 13, fontFamily: "inherit", fontWeight: 500,
+    background: "none", border: "none", color: "#62687A",
+    textDecoration: "underline", cursor: "pointer", padding: 0,
+  },
+  settingsBox: {
+    marginTop: 10, background: "#FFF", border: "1px solid #E4E5E9",
+    borderRadius: 12, padding: "14px 16px",
+  },
+  settingsLabel: {
+    display: "block", fontSize: 13, color: "#62687A",
+    lineHeight: 1.5, marginBottom: 8,
+  },
   chip: {
     fontSize: 14, fontFamily: "inherit", fontWeight: 500,
     padding: "7px 16px", border: "2px solid", borderRadius: 999, cursor: "pointer",
